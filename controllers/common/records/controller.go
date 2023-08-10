@@ -128,22 +128,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		if desiredPhase == v1alpha1.RunningPhase && originalPhase != v1alpha1.Injected {
 			// The originalPhase has three possible situations: Not Injected, Not Injected/* or Injected/*
 			// In the first two situations, it should apply, in the last situation, it should recover
-
-			if strings.HasPrefix(string(originalPhase), string(v1alpha1.NotInjected)) {
-				operation = Apply
-			} else {
-				operation = Recover
-			}
+			operation = r.calcOperation(originalPhase)
 		}
 		if desiredPhase == v1alpha1.StoppedPhase && originalPhase != v1alpha1.NotInjected {
 			// The originalPhase has three possible situations: Not Injected/*, Injected, or Injected/*
 			// In the first one situation, it should apply, in the last two situations, it should recover
-
-			if strings.HasPrefix(string(originalPhase), string(v1alpha1.NotInjected)) {
-				operation = Apply
-			} else {
-				operation = Recover
-			}
+			operation = r.calcOperation(originalPhase)
 		}
 
 		if operation == Apply {
@@ -246,6 +236,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		})
 	}
 	return ctrl.Result{Requeue: needRetry}, nil
+}
+
+// get operation by original phase, if the original phase starts with "not inject", apply it, otherwise, recover it.
+func (r *Reconciler) calcOperation(originalPhase v1alpha1.Phase) Operation {
+	if strings.HasPrefix(string(originalPhase), string(v1alpha1.NotInjected)) {
+		return Apply
+	} else {
+		return Recover
+	}
 }
 
 func newRecordEvent(eventType v1alpha1.RecordEventType, eventStage v1alpha1.RecordEventOperation, msg string) *v1alpha1.RecordEvent {
