@@ -199,11 +199,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 
-	// TODO: auto generate SetCustomStatus rather than reflect
-	var customStatus reflect.Value
-	if objWithStatus, ok := obj.(v1alpha1.InnerObjectWithCustomStatus); ok {
-		customStatus = reflect.Indirect(reflect.ValueOf(objWithStatus.GetCustomStatus()))
-	}
 	if shouldUpdate {
 		updateError := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 			r.Log.Info("updating records", "records", records)
@@ -217,6 +212,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			obj.GetStatus().Experiment.Records = records
 			if objWithStatus, ok := obj.(v1alpha1.InnerObjectWithCustomStatus); ok {
 				ptrToCustomStatus := objWithStatus.GetCustomStatus()
+
+				// TODO: auto generate SetCustomStatus rather than reflect
+				var customStatus reflect.Value
+				if objWithStatus, ok := obj.(v1alpha1.InnerObjectWithCustomStatus); ok {
+					customStatus = reflect.Indirect(reflect.ValueOf(objWithStatus.GetCustomStatus()))
+				}
+
 				// TODO: auto generate SetCustomStatus rather than reflect
 				reflect.Indirect(reflect.ValueOf(ptrToCustomStatus)).Set(reflect.Indirect(customStatus))
 			}
