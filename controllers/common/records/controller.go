@@ -100,13 +100,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 				return ctrl.Result{}, nil
 			}
 
+			// set shouldUpdate is true only once.
+			shouldUpdate = true
 			for _, target := range targets {
 				records = append(records, &v1alpha1.Record{
 					Id:          target.Id(),
 					SelectorKey: name,
 					Phase:       v1alpha1.NotInjected,
 				})
-				shouldUpdate = true
 			}
 		}
 		// TODO: dynamic upgrade the records when some of these pods/containers stopped
